@@ -1,0 +1,21 @@
+@relation llm_survey
+
+@attribute 性别 {女,男}
+@attribute 豆包 {是}
+@attribute chatgpt {是}
+@attribute 智谱 {是}
+@attribute Deepseek {是}
+@attribute kimi {是}
+@attribute 千问 {是}
+
+@data
+女,是,是,是,?,?,?
+女,是,是,?,是,?,?
+女,是,是,?,是,是,?
+女,是,?,?,是,是,?
+女,?,是,?,是,是,是
+男,是,是,是,?,?,?
+男,是,是,?,是,?,是
+男,是,是,?,是,是,是
+男,是,?,?,是,是,?
+男,?,是,?,是,是,是

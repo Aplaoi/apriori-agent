@@ -1,0 +1,29 @@
+# Secrets and local runtime artifacts — never commit these.
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.tmp/
+pip-*/
+vendor/
+
+# Generated runtime data
+uploads/*
+!uploads/.gitkeep
+outputs/*
+!outputs/.gitkeep
+work/*
+!work/.gitkeep
+*.log
+tests/*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="用 DeepSeek Agent 调用 Weka Apriori 挖掘频繁项集与关联规则">
+  <title>Apriori Agent · Weka × DeepSeek</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </div>
+      <div>
+        <div class="brand-title">Apriori Agent</div>
+        <div class="brand-subtitle">Weka 3.8.7 × DeepSeek</div>
+      </div>
+    </div>
+    <div class="engine-status" id="engineStatus">
+      <span class="status-dot"></span>
+      <span id="engineStatusText">检查运行环境中…</span>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="panel control-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Mining Setup</p>
+          <h1>关联规则挖掘</h1>
+        </div>
+        <span class="step-tag">01 — 03</span>
+      </div>
+
+      <section class="field-block">
+        <div class="field-label-row">
+          <label class="field-label" for="fileInput">数据文件</label>
+          <span class="field-note">CSV / ARFF · ≤ 20 MB</span>
+        </div>
+        <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="上传 CSV 或 ARFF 文件">
+          <input id="fileInput" type="file" accept=".csv,.arff,text/csv" hidden>
+          <div class="drop-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"></path>
+              <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"></path>
+            </svg>
+          </div>
+          <div class="drop-copy" id="dropCopy">
+            <strong>拖拽文件到这里，或点击选择</strong>
+          </div>
+          <div class="file-chip" id="fileChip" hidden>
+            <span class="file-chip-icon">CSV</span>
+            <span class="file-chip-name" id="fileName"></span>
+            <span class="file-chip-size" id="fileSize"></span>
+            <button type="button" class="file-clear" id="fileClear" aria-label="移除文件">×</button>
+          </div>
+        </div>
+        <button type="button" class="text-button" id="demoButton">
+          <span>载入示例 llm.arff</span>
+          <span aria-hidden="true">↗</span>
+        </button>
+      </section>
+
+      <section class="field-block">
+        <div class="field-label-row">
+          <label class="field-label" for="promptInput">分析要求</label>
+          <span class="field-note">自然语言即可</span>
+        </div>
+        <textarea id="promptInput" rows="5" placeholder="例如：分析这份数据，支持度 10%、置信度 60%，只处理性别为女的数据，重点解释最强的几条规则。"></textarea>
+        <div class="prompt-chips" aria-label="提示词示例">
+          <!-- <button type="button" data-prompt="找最小支持度为0.4，最小置信度为0.7的频繁项集和强规则，只处理性别为女的数据">llm 问卷</button> -->
+        </div>
+      </section>
+
+      <button class="run-button" id="runButton" type="button">
+        <span class="run-button-label">开始挖掘</span>
+        <span class="run-arrow" aria-hidden="true">→</span>
+      </button>
+      <div class="progress" id="progress" hidden>
+        <span class="spinner" aria-hidden="true"></span>
+        <span id="progressText">正在解析数据…</span>
+      </div>
+
+      <details class="dataset-details" id="datasetDetails" hidden>
+        <summary>查看数据预处理详情</summary>
+        <div class="dataset-body" id="datasetBody"></div>
+      </details>
+    </aside>
+
+    <section class="results-column" aria-live="polite">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-visual" aria-hidden="true">
+          <div class="orbit orbit-one"></div>
+          <div class="orbit orbit-two"></div>
+          <div class="mini-bars">
+            <i style="height: 34%"></i><i style="height: 52%"></i><i style="height: 44%"></i><i style="height: 78%"></i><i style="height: 64%"></i><i style="height: 92%"></i>
+          </div>
+        </div>
+        <p class="eyebrow">Frequent Patterns, Explained</p>
+        <h2>上传数据，剩下的交给 Agent</h2>
+        <p class="empty-copy">DeepSeek 负责理解你的要求并调用工具，Weka 负责真实的 Apriori 计算，Python 负责把结果画出来。</p>
+        <div class="pipeline">
+          <span><b>01</b> 解析数据</span>
+          <i></i>
+          <span><b>02</b> Weka 挖掘</span>
+          <i></i>
+          <span><b>03</b> 解读与绘图</span>
+        </div>
+      </div>
+
+      <div id="errorBox" class="error-box" hidden>
+        <strong>这次没有跑通</strong>
+        <p id="errorText"></p>
+      </div>
+
+      <div id="resultsWrap" class="results-wrap" hidden>
+        <article class="answer-card">
+          <div class="answer-header">
+            <div class="agent-title">
+              <span class="agent-badge">DeepSeek Agent</span>
+              <span class="mode-badge" id="modeBadge">工具调用</span>
+            </div>
+            <button type="button" class="download-button" id="downloadButton">下载 JSON</button>
+          </div>
+          <div class="answer-body" id="answerBody"></div>
+          <div class="tool-trace" id="toolTrace"></div>
+          <div class="warning-box" id="warningBox" hidden></div>
+        </article>
+
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <div class="result-card">
+          <div class="tabs" role="tablist" aria-label="结果视图">
+            <button type="button" class="tab is-active" data-tab="itemsets" role="tab" aria-selected="true">频繁项集 <span id="itemsetCount"></span></button>
+            <button type="button" class="tab" data-tab="rules" role="tab" aria-selected="false">关联规则 <span id="ruleCount"></span></button>
+            <button type="button" class="tab" data-tab="charts" role="tab" aria-selected="false">可视化</button>
+          </div>
+
+          <div class="tab-panel is-active" id="tab-itemsets" role="tabpanel">
+            <div class="table-meta" id="itemsetMeta"></div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th class="rank-col">#</th><th>频繁项集</th><th class="num-col">项数</th><th class="support-col">支持度</th><th class="num-col">出现次数</th></tr>
+                </thead>
+                <tbody id="itemsetBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="tab-panel" id="tab-rules" role="tabpanel">
+            <div class="table-meta" id="ruleMeta"></div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th class="rank-col">#</th><th>规则</th><th class="support-col">支持度</th><th class="support-col">置信度</th><th class="num-col">提升度</th></tr>
+                </thead>
+                <tbody id="ruleBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="tab-panel" id="tab-charts" role="tabpanel">
+            <div class="chart-grid">
+              <figure class="chart-card">
+                <img id="itemsetChart" alt="频繁项集支持度条形图">
+                <figcaption>频繁项集支持度 — 越高表示该项集出现得越普遍</figcaption>
+              </figure>
+              <figure class="chart-card">
+                <img id="ruleChart" alt="关联规则置信度条形图">
+                <figcaption>关联规则置信度 — 括号内为提升度，大于 1 表示正相关</figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+
+        <p class="result-footnote" id="resultFootnote"></p>
+      </div>
+    </section>
+  </main>
+
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
